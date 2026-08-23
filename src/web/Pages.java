@@ -207,11 +207,6 @@ tbody tr:hover{background:var(--chart)}
     linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
     linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
   background-size:28px 28px}
-.auth-aside::before,.auth-aside::after{content:"";position:absolute;
-  right:-30px;bottom:-30px;border-radius:50%;pointer-events:none}
-.auth-aside::before{width:230px;height:230px;border:1px solid rgba(255,255,255,.08)}
-.auth-aside::after{width:150px;height:150px;right:10px;bottom:10px;
-  border:1px solid rgba(194,24,91,.3)}
 .auth-aside .eyebrow{color:#8FA9AE}
 .auth-aside .pitch{font-family:var(--display);font-weight:800;
   font-size:1.35rem;line-height:1.28;margin-bottom:.9rem;position:relative}
