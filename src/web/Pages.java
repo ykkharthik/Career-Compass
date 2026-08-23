@@ -85,6 +85,8 @@ input,select{width:100%;padding:.6rem .75rem;border:1px solid var(--line);
   background:var(--surface);color:var(--abyss)}
 input:focus,select:focus{outline:2px solid var(--marker);outline-offset:0;
   border-color:var(--marker)}
+input[type="checkbox"]{width:auto;padding:0;margin:0;accent-color:var(--marker);
+  cursor:pointer}
 button{margin-top:1.25rem;padding:.65rem 1.5rem;border:none;border-radius:0;
   background:var(--abyss);color:#fff;font-size:.85rem;cursor:pointer;
   font-family:var(--mono);letter-spacing:.09em;text-transform:uppercase;
@@ -197,37 +199,24 @@ tbody tr:hover{background:var(--chart)}
   margin-bottom:.3rem}
 .roles-grid .role span{font-size:.76rem;color:var(--slate)}
 
-/* ---------- auth split layout ---------- */
-.auth-shell{display:grid;grid-template-columns:1.05fr 1fr;gap:2.4rem;
-  align-items:start;margin:2.2rem auto;max-width:920px}
-.auth-shell .card.narrow{margin:0;max-width:none}
-.auth-aside{background:var(--abyss);color:#fff;padding:2rem 2.1rem;
-  position:relative;overflow:hidden;
+/* ---------- signed-out background ---------- */
+/* Landing/login/register/verify get a livelier backdrop than the plain
+   chart-paper grid used everywhere else — soft washes of the same three
+   accent colours the app already uses (marker/depth/sand), so it reads as
+   an inviting front door without introducing a whole new palette. */
+body.signed-out{
   background-image:
-    linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
-  background-size:28px 28px}
-.auth-aside .eyebrow{color:#8FA9AE}
-.auth-aside .pitch{font-family:var(--display);font-weight:800;
-  font-size:1.35rem;line-height:1.28;margin-bottom:.9rem;position:relative}
-.auth-aside .lede{color:#BFD3D0;font-size:.88rem;margin-bottom:1.5rem;
-  max-width:38ch;position:relative}
-.auth-aside .role-list{list-style:none;margin-bottom:1.6rem;position:relative}
-.auth-aside .role-list li{position:relative;padding-left:1.2rem;
-  margin-bottom:.5rem;font-size:.85rem;color:#DCE6E4}
-.auth-aside .role-list li::before{content:"\\2192";position:absolute;left:0;
-  color:var(--marker)}
-.auth-aside .demo-note{font-family:var(--mono);font-size:.72rem;
-  color:#8FA9AE;letter-spacing:.08em;text-transform:uppercase;
-  margin-bottom:.5rem;position:relative}
-.auth-aside table{font-size:.78rem;position:relative}
-.auth-aside th{color:#8FA9AE;border-bottom:1px solid rgba(255,255,255,.18)}
-.auth-aside td{border-bottom:1px solid rgba(255,255,255,.1);color:#DCE6E4}
-.auth-aside tbody tr:hover{background:rgba(255,255,255,.04)}
+    radial-gradient(1100px circle at 12% -10%, rgba(194,24,91,.14), transparent 55%),
+    radial-gradient(1000px circle at 105% 8%, rgba(14,124,123,.16), transparent 55%),
+    radial-gradient(900px circle at 50% 115%, rgba(184,134,11,.12), transparent 55%),
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:auto,auto,auto,56px 56px,56px 56px;
+  background-position:0 0,0 0,0 0,-1px -1px,-1px -1px;
+}
 
 @media(max-width:820px){
   .steps,.roles-grid{grid-template-columns:1fr 1fr}
-  .auth-shell{grid-template-columns:1fr}
 }
 @media(max-width:640px){
   .grid2,.grid5{grid-template-columns:1fr}
@@ -252,11 +241,15 @@ tbody tr:hover{background:var(--chart)}
  fill="#C2185B"/><circle cx="12" cy="12" r="1.5" fill="#0B1F2A"/></svg>""";
 
     public static String shell(String title, String nav, String body) {
+        // The four signed-out pages all pass LOGGED_OUT_NAV, which doubles
+        // here as the signal to use the livelier background (see body.signed-out
+        // in CSS) instead of touching every call site with a new parameter.
+        String bodyClass = LOGGED_OUT_NAV.equals(nav) ? " class=\"signed-out\"" : "";
         return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
                 + "<title>" + title + " \u00B7 CareerCompass</title>"
                 + FONTS
-                + "<link rel=\"stylesheet\" href=\"/style.css\"></head><body>"
+                + "<link rel=\"stylesheet\" href=\"/style.css\"></head><body" + bodyClass + ">"
                 + "<header class=\"topbar\">" + MARK
                 + "<span class=\"brand\">CareerCompass</span><span class=\"spacer\"></span>"
                 + nav + "</header><main class=\"wrap\">" + body + "</main></body></html>";

@@ -74,8 +74,12 @@ public final class AppContext {
     }
 
     public boolean validCsrf(HttpExchange ex, Map<String, String> f) {
+        return validCsrfToken(ex, f.get("_csrf"));
+    }
+
+    /** Same check as {@link #validCsrf}, for callers that already have the token (e.g. a multi-value form). */
+    public boolean validCsrfToken(HttpExchange ex, String token) {
         String expected = sessions.csrfFor(Http.cookie(ex));
-        String got = f.get("_csrf");
-        return expected != null && expected.equals(got);
+        return expected != null && expected.equals(token);
     }
 }

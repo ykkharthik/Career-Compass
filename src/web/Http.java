@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +40,26 @@ public final class Http {
     public static Map<String, String> form(HttpExchange ex) throws IOException {
         String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         return parseUrlEncoded(body);
+    }
+
+    /**
+     * Like {@link #form}, but keeps every value for a repeated field name —
+     * needed for a checkbox group (e.g. {@code <input name="emails" ...>}
+     * repeated per row) where {@code form()}'s single-value map would silently
+     * keep only the last one.
+     */
+    public static Map<String, List<String>> formMulti(HttpExchange ex) throws IOException {
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        Map<String, List<String>> map = new LinkedHashMap<>();
+        if (body.isBlank()) return map;
+        for (String pair : body.split("&")) {
+            int eq = pair.indexOf('=');
+            if (eq < 0) continue;
+            String key = URLDecoder.decode(pair.substring(0, eq), StandardCharsets.UTF_8);
+            String value = URLDecoder.decode(pair.substring(eq + 1), StandardCharsets.UTF_8);
+            map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+        }
+        return map;
     }
 
     private static Map<String, String> parseUrlEncoded(String raw) {

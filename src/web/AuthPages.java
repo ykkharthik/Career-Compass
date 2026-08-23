@@ -103,44 +103,21 @@ public final class AuthPages {
                 + "</td><td><code>" + esc(password) + "</code></td></tr>";
     }
 
-    /** The compact demo-account reference shown on the login page's aside panel. */
-    private static String demoAside() {
-        return "<p class=\"demo-note\">Demo accounts &middot; password shown</p>"
-                + "<table><tr><th>Email</th><th>Pass</th></tr>"
-                + "<tr><td>priya@cit.edu.in</td><td>demo123</td></tr>"
-                + "<tr><td>recruiter@demo.com</td><td>demo123</td></tr>"
-                + "<tr><td>mentor@demo.com</td><td>demo123</td></tr>"
-                + "<tr><td>faculty@demo.com</td><td>demo123</td></tr>"
-                + "<tr><td>admin@careercompass.com</td><td>admin123</td></tr></table>";
-    }
-
     // ------------------------------ login ------------------------------
 
     public void loginPage(HttpExchange ex, String error) throws IOException {
         User u = ctx.currentUser(ex);
         if (u != null) { Http.redirect(ex, ctx.homeFor(u)); return; }
 
-        String aside = "<div class=\"auth-aside\">"
-                + "<span class=\"eyebrow\">CareerCompass</span>"
-                + "<p class=\"pitch\">Five roles, one loop.</p>"
-                + "<p class=\"lede\">Ranked career recommendations for students, verified signal for "
-                + "recruiters, and a closed feedback loop between mentors, faculty and admins.</p>"
-                + "<ul class=\"role-list\">"
-                + "<li>Students see hybrid rule + k-NN recommendations, explained</li>"
-                + "<li>Recruiters see faculty-verified skills, not just claims</li>"
-                + "<li>Mentors and faculty close the loop with notifications</li></ul>"
-                + demoAside() + "</div>";
-
-        String form = "<div class=\"card narrow\"><h1>Sign in</h1>"
+        String body = "<div class=\"card narrow\"><h1>Sign in</h1>"
                 + "<p class=\"sub\">Students, recruiters, mentors, faculty and admins all sign in here.</p>"
                 + Pages.errorBox(error)
                 + "<form method=\"post\" action=\"/login\">"
                 + "<label for=\"email\">Email</label><input id=\"email\" name=\"email\" type=\"email\" required>"
                 + "<label for=\"pw\">Password</label><input id=\"pw\" name=\"password\" type=\"password\" required>"
                 + "<button>Sign in</button></form>"
-                + "<p style=\"margin-top:1rem\">New here? <a href=\"/register\">Create an account</a></p></div>";
-
-        String body = "<div class=\"auth-shell\">" + aside + form + "</div>";
+                + "<p style=\"margin-top:1rem\">New here? <a href=\"/register\">Create an account</a></p>"
+                + "<p style=\"margin-top:.4rem\"><a href=\"/\">← Back home</a></p></div>";
         Http.html(ex, 200, Pages.shell("Sign in", Pages.LOGGED_OUT_NAV, body));
     }
 
@@ -172,18 +149,7 @@ public final class AuthPages {
     // ------------------------------ register ------------------------------
 
     public void registerPage(HttpExchange ex, String error) throws IOException {
-        String aside = "<div class=\"auth-aside\">"
-                + "<span class=\"eyebrow\">Create account</span>"
-                + "<p class=\"pitch\">One account per email. A code confirms it's yours.</p>"
-                + "<p class=\"lede\">Pick the role that matches you — each one unlocks a different "
-                + "side of the platform.</p>"
-                + "<ul class=\"role-list\">"
-                + "<li><b>Student</b> — profile, recommendations, internships</li>"
-                + "<li><b>Recruiter</b> — browse and shortlist candidates</li>"
-                + "<li><b>Mentor</b> — set up a profile, take requests</li>"
-                + "<li><b>Faculty</b> — endorse verified student skills</li></ul></div>";
-
-        String form = "<div class=\"card narrow\"><h1>Create your account</h1>"
+        String body = "<div class=\"card narrow\"><h1>Create your account</h1>"
                 + "<p class=\"sub\">One account per email id. A verification code confirms it's yours.</p>"
                 + Pages.errorBox(error)
                 + "<form method=\"post\" action=\"/register\">"
@@ -196,9 +162,8 @@ public final class AuthPages {
                 + "<option value=\"MENTOR\">Mentor (industry professional)</option>"
                 + "<option value=\"FACULTY\">Faculty / academic advisor</option></select>"
                 + "<button class=\"brass\">Send verification code</button></form>"
-                + "<p style=\"margin-top:1rem\">Already registered? <a href=\"/login\">Sign in</a></p></div>";
-
-        String body = "<div class=\"auth-shell\">" + aside + form + "</div>";
+                + "<p style=\"margin-top:1rem\">Already registered? <a href=\"/login\">Sign in</a></p>"
+                + "<p style=\"margin-top:.4rem\"><a href=\"/\">← Back home</a></p></div>";
         Http.html(ex, 200, Pages.shell("Register", Pages.LOGGED_OUT_NAV, body));
     }
 

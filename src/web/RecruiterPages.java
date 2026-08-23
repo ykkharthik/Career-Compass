@@ -106,25 +106,33 @@ public final class RecruiterPages {
                 .append("<button class=\"small\">Filter</button></form></div>");
 
         b.append("<div class=\"card\"><h2 style=\"margin-top:0\">Candidates</h2>")
-                .append("<p class=\"sub\">Ranked best-fit first, using each candidate's own top recommendation score.</p>")
-                .append("<table><tr><th>Candidate</th><th>CGPA</th><th>Skills</th><th>Best-fit domain</th><th></th></tr>");
+                .append("<p class=\"sub\">Ranked best-fit first, using each candidate's own top recommendation score. ")
+                .append("Select any number and shortlist them together.</p>")
+                .append("<form method=\"post\" action=\"/shortlist/bulk\">").append(ctx.csrfInput(ex))
+                .append("<table><tr>")
+                .append("<th style=\"width:2.4rem\"><input type=\"checkbox\" id=\"selectAllCandidates\" ")
+                .append("onclick=\"document.querySelectorAll('.cand-check').forEach(c=>c.checked=this.checked)\" ")
+                .append("aria-label=\"Select all candidates\"></th>")
+                .append("<th>Candidate</th><th style=\"text-align:right\">CGPA</th><th>Skills</th><th>Best-fit domain</th></tr>");
         if (shown.isEmpty())
             b.append("<tr><td colspan=\"5\">No candidates match these filters yet.</td></tr>");
         for (Candidate c : shown) {
             Student s = c.student();
-            b.append("<tr><td><b>").append(esc(s.getName())).append("</b><br><span style=\"color:var(--slate);font-size:.85rem\">")
-                    .append(esc(s.getEmail())).append("</span></td><td>").append(s.getCgpa())
-                    .append("</td><td>");
+            b.append("<tr><td><input type=\"checkbox\" class=\"cand-check\" name=\"emails\" value=\"")
+                    .append(esc(s.getEmail())).append("\" aria-label=\"Select ").append(esc(s.getName()))
+                    .append("\"></td>")
+                    .append("<td><b>").append(esc(s.getName())).append("</b><br><span style=\"color:var(--slate);font-size:.85rem\">")
+                    .append(esc(s.getEmail())).append("</span></td>")
+                    .append("<td style=\"text-align:right\">").append(s.getCgpa()).append("</td><td>");
             for (String sk : s.getSkills()) {
                 b.append("<span class=\"chip ").append(c.endorsed().contains(sk) ? "have\">✓ " : "\">")
                         .append(esc(sk)).append("</span> ");
             }
-            b.append("</td><td><span class=\"badge role\">").append(esc(c.topDomain())).append("</span></td>")
-                    .append("<td><form method=\"post\" action=\"/shortlist\">").append(ctx.csrfInput(ex))
-                    .append("<input type=\"hidden\" name=\"email\" value=\"").append(esc(s.getEmail()))
-                    .append("\"><button class=\"small brass\">Shortlist</button></form></td></tr>");
+            b.append("</td><td><span class=\"badge role\">").append(esc(c.topDomain())).append("</span></td></tr>");
         }
-        b.append("</table></div>");
+        b.append("</table>");
+        if (!shown.isEmpty()) b.append("<button class=\"brass small\">Shortlist selected</button>");
+        b.append("</form></div>");
 
         b.append("<div class=\"card\"><h2 style=\"margin-top:0\">My shortlist</h2><table>")
                 .append("<tr><th>Candidate</th><th>Added</th></tr>");
@@ -156,15 +164,28 @@ public final class RecruiterPages {
         if (u == null) return;
         Map<String, String> f = form(ex);
         if (!ctx.validCsrf(ex, f)) { redirect(ex, "/recruiter"); return; }
-        String email = f.getOrDefault("email", "");
-        if (students.findByEmail(email).isPresent()) {
-            FileManager.appendLine(SHORTLIST_PATH,
-                    String.join(",", u.getEmail(), email.toLowerCase(), LocalDate.now().toString()));
-            notifications.add(new Notification(UUID.randomUUID().toString(), email.toLowerCase(),
-                    "You were shortlisted by a recruiter (" + u.getEmail() + ")", "/student",
-                    false, Instant.now().toString()));
-        }
+        shortlistOne(u.getEmail(), f.getOrDefault("email", ""));
         redirect(ex, "/recruiter");
+    }
+
+    /** The candidates table's checkbox-select + "Shortlist selected" bulk action. */
+    public void doBulkShortlist(HttpExchange ex) throws IOException {
+        User u = ctx.require(ex, User.Role.RECRUITER);
+        if (u == null) return;
+        Map<String, List<String>> f = Http.formMulti(ex);
+        String csrf = f.getOrDefault("_csrf", List.of("")).get(0);
+        if (!ctx.validCsrfToken(ex, csrf)) { redirect(ex, "/recruiter"); return; }
+        for (String email : f.getOrDefault("emails", List.of())) shortlistOne(u.getEmail(), email);
+        redirect(ex, "/recruiter");
+    }
+
+    private void shortlistOne(String recruiterEmail, String candidateEmail) {
+        if (students.findByEmail(candidateEmail).isEmpty()) return;
+        FileManager.appendLine(SHORTLIST_PATH,
+                String.join(",", recruiterEmail, candidateEmail.toLowerCase(), LocalDate.now().toString()));
+        notifications.add(new Notification(UUID.randomUUID().toString(), candidateEmail.toLowerCase(),
+                "You were shortlisted by a recruiter (" + recruiterEmail + ")", "/student",
+                false, Instant.now().toString()));
     }
 
     // ------------------------------ applications pipeline ------------------------------

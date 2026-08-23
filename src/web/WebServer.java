@@ -148,6 +148,7 @@ public class WebServer {
 
                 case "/recruiter" -> recruiterPages.page(ex);
                 case "/shortlist" -> { if (post(method)) recruiterPages.doShortlist(ex); else redirect(ex, "/recruiter"); }
+                case "/shortlist/bulk" -> { if (post(method)) recruiterPages.doBulkShortlist(ex); else redirect(ex, "/recruiter"); }
                 case "/recruiter/applications" -> recruiterPages.applicationsPage(ex);
                 case "/recruiter/applications/update" -> {
                     if (post(method)) recruiterPages.doUpdateApplicationStatus(ex);
