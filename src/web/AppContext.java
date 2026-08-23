@@ -65,8 +65,10 @@ public final class AppContext {
             case FACULTY -> "<a href=\"/faculty\">Faculty Dashboard</a>";
             case ADMIN -> "<a href=\"/admin\">Console</a>";
         };
-        return base + bell + "<a href=\"/trends\">Trends</a><a href=\"/benchmark\">ML Benchmark</a>"
-                + "<a href=\"/logout\">Sign out</a>";
+        // ML Benchmark deliberately isn't linked here - it's a developer-facing
+        // diagnostics page (see BenchmarkPages), not something an end user of
+        // any role needs in their nav. Still reachable directly at /benchmark.
+        return base + bell + "<a href=\"/trends\">Trends</a><a href=\"/logout\">Sign out</a>";
     }
 
     public String csrfInput(HttpExchange ex) {

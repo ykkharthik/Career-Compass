@@ -193,7 +193,7 @@ public final class StudentPages {
                 .append("50% transparent rules (skill overlap + interest fit, with faculty-verified skills ")
                 .append("weighted higher), 25% k-NN and 25% Naive Bayes — two different learning paradigms over ")
                 .append("the same ").append(classifier.trainingSize())
-                .append(" example profiles (see the ML Benchmark page for how they compare).</p>");
+                .append(" example profiles.</p>");
         int rank = 0;
         List<Student> allStudents = students.findAll();
         for (var r : recs) {
