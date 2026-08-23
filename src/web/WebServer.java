@@ -554,6 +554,11 @@ public class WebServer {
     private void css(HttpExchange ex) throws IOException {
         byte[] bytes = Pages.CSS.getBytes(StandardCharsets.UTF_8);
         ex.getResponseHeaders().add("Content-Type", "text/css; charset=utf-8");
+        // No caching: this stylesheet is still actively changing during
+        // development, and a stale cached copy is indistinguishable from a
+        // server-side bug from the browser's side — not worth the tradeoff
+        // at this stage.
+        ex.getResponseHeaders().add("Cache-Control", "no-store");
         ex.sendResponseHeaders(200, bytes.length);
         try (OutputStream os = ex.getResponseBody()) { os.write(bytes); }
     }
