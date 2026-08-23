@@ -1,0 +1,7 @@
+# Copy this file to mail.properties and fill in your details to send REAL emails.
+# For Gmail: enable 2-step verification, then create an App Password at
+# https://myaccount.google.com/apppasswords and paste it as smtp.pass
+smtp.host=smtp.gmail.com
+smtp.port=465
+smtp.user=youraddress@gmail.com
+smtp.pass=your-16-character-app-password

@@ -1,0 +1,21 @@
+# domain,title,organisation_type,duration,stipend_range,prerequisites(pipe separated)
+Software Engineering,Java Backend Intern,IT services firm,3 months,INR 8k-15k/mo,java|sql
+Software Engineering,Full-Stack Development Intern,Product startup,6 months,INR 15k-30k/mo,java|git
+Software Engineering,Android App Development Intern,Product startup,3 months,INR 10k-20k/mo,java
+Software Engineering,SDE Summer Intern,Product company,2 months,INR 40k+/mo,data structures|algorithms
+Data Science,Data Analyst Intern,Analytics firm,3 months,INR 10k-18k/mo,python|sql
+Data Science,Machine Learning Intern,Product startup,6 months,INR 15k-30k/mo,python|machine learning
+Data Science,Business Intelligence Intern,IT services firm,3 months,INR 8k-15k/mo,sql
+Data Science,Research Intern (Data Mining),Research lab,6 months,INR 10k-25k/mo,python|statistics
+Cybersecurity,SOC Analyst Intern,Security firm,3 months,INR 10k-18k/mo,networking|linux
+Cybersecurity,Penetration Testing Intern,Security consultancy,6 months,INR 12k-25k/mo,ethical hacking|linux
+Cybersecurity,Security Research Intern,Research lab,6 months,INR 10k-20k/mo,networking|python
+Cloud & DevOps Engineering,Cloud Support Intern,IT services firm,3 months,INR 8k-15k/mo,linux
+Cloud & DevOps Engineering,DevOps Intern,Product startup,6 months,INR 15k-30k/mo,linux|docker
+Cloud & DevOps Engineering,Site Reliability Intern,Product company,6 months,INR 25k+/mo,linux|scripting
+UI/UX Design,UI Design Intern,Design agency,3 months,INR 8k-15k/mo,figma
+UI/UX Design,UX Research Intern,Product startup,3 months,INR 10k-18k/mo,user research
+UI/UX Design,Product Design Intern,Product company,6 months,INR 20k+/mo,figma|prototyping
+Product Management,Product Analyst Intern,Product startup,3 months,INR 12k-20k/mo,data analysis
+Product Management,Associate PM Intern,Product company,6 months,INR 25k+/mo,communication|agile
+Product Management,Program Management Intern,IT services firm,3 months,INR 10k-18k/mo,communication
