@@ -274,4 +274,40 @@ tbody tr:hover{background:var(--chart)}
     public static String noteBox(String msg) {
         return msg == null || msg.isBlank() ? "" : "<div class=\"note\">" + msg + "</div>";
     }
+
+    /** A single number-and-label tile, e.g. the counters atop Trends/Admin/Recruiter pages. */
+    public static String stat(Object value, String label) {
+        return "<div class=\"stat\"><b>" + value + "</b><span>" + label + "</span></div>";
+    }
+
+    /**
+     * The bearing-tape gauge — the signature element shared by recommendation
+     * scores, domain-popularity bars, and the internship funnel. {@code name}
+     * and {@code splitLine} must already be escaped by the caller if needed;
+     * {@code splitLine} may be null/blank to omit the secondary readout.
+     */
+    public static String gauge(String name, String deg, int pct, String splitLine) {
+        String split = (splitLine == null || splitLine.isBlank())
+                ? "" : "<div class=\"split\">" + splitLine + "</div>";
+        return "<div class=\"gauge\"><div class=\"head\"><span class=\"name\">" + name
+                + "</span><span class=\"deg\">" + deg + "</span></div>"
+                + "<div class=\"track\"><div class=\"fill\" style=\"width:" + pct + "%\"></div>"
+                + "<div class=\"needle\" style=\"left:" + pct + "%\"></div></div>" + split + "</div>";
+    }
+
+    /** Status pill for an application or mentorship-request row. */
+    public static String statusBadge(String status) {
+        String cls = switch (status) {
+            case "OFFER" -> "ready";
+            case "REJECTED" -> "danger-badge";
+            case "APPLIED" -> "role";
+            default -> "upskill";
+        };
+        return "<span class=\"badge " + cls + "\">" + esc(status) + "</span>";
+    }
+
+    /** Truncates an ISO-8601 instant down to its date portion for table display. */
+    public static String shortDate(String iso) {
+        try { return iso.substring(0, 10); } catch (Exception e) { return iso; }
+    }
 }
