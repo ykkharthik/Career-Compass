@@ -91,9 +91,19 @@ public class KdTree {
                 .reversed();
         PriorityQueue<ScoredPoint> best = new PriorityQueue<>(worstFirst);
         search(root, target, k, best, worstFirst);
+
+        // The priority queue's iteration order is an implementation detail of
+        // its internal heap, not a total order - two points exactly tied at
+        // the k-th boundary could come out in either order. Re-sort with the
+        // SAME (distance, secondary key) order brute force uses, so the final
+        // list - not just the set of k points selected - is identical to
+        // brute force's, including tie order.
+        List<ScoredPoint> sorted = new ArrayList<>(best);
+        sorted.sort(Comparator
+                .<ScoredPoint>comparingDouble(sp -> sp.dist)
+                .thenComparing(sp -> secondaryKey(sp.point.coords())));
         List<Neighbour> out = new ArrayList<>();
-        for (ScoredPoint sp : best) out.add(new Neighbour(sp.point.label(), Math.sqrt(sp.dist)));
-        out.sort(Comparator.comparingDouble(Neighbour::distance));
+        for (ScoredPoint sp : sorted) out.add(new Neighbour(sp.point.label(), Math.sqrt(sp.dist)));
         return out;
     }
 

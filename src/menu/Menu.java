@@ -4,6 +4,7 @@ import auth.AuthService;
 import auth.User;
 import exception.InvalidProfileException;
 import ml.KnnCareerClassifier;
+import ml.NaiveBayesClassifier;
 import model.CareerPath;
 import model.CloudEngineering;
 import model.Cybersecurity;
@@ -42,8 +43,10 @@ public class Menu {
 
     private final KnnCareerClassifier classifier =
             new KnnCareerClassifier("data/career_training.csv", 5);
+    private final NaiveBayesClassifier naiveBayes =
+            new NaiveBayesClassifier("data/career_training.csv");
     private final RecommendationService recommender =
-            new RecommendationService(careers, classifier);
+            new RecommendationService(careers, classifier, naiveBayes);
     private final SkillGapService skillGap = new SkillGapService();
     private final CertificationAdvisor certAdvisor =
             new CertificationAdvisor("data/certifications.csv");
@@ -171,12 +174,12 @@ public class Menu {
     private void recommendations(User user) {
         requireProfile(user).ifPresent(s -> {
             var recs = recommender.recommend(s);
-            System.out.println("\n--- Career Recommendations (hybrid: rules + k-NN) ---");
+            System.out.println("\n--- Career Recommendations (hybrid: rules + k-NN + Naive Bayes) ---");
             int rank = 1;
             for (var r : recs) {
-                System.out.printf("%d. %-28s  score %.0f%%  (rules %.0f%% | k-NN %.0f%%)%n",
+                System.out.printf("%d. %-28s  score %.0f%%  (rules %.0f%% | k-NN %.0f%% | Bayes %.0f%%)%n",
                         rank++, r.career.getName(), r.finalScore * 100,
-                        r.ruleScore * 100, r.knnScore * 100);
+                        r.ruleScore * 100, r.knnScore * 100, r.nbScore * 100);
                 for (String reason : r.reasons) System.out.println("      - " + reason);
                 System.out.println("      roles: " + String.join(", ", r.career.getTypicalRoles()));
             }

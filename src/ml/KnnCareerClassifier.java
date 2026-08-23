@@ -128,6 +128,27 @@ public class KnnCareerClassifier {
         return votes.isEmpty() ? null : votes.keySet().iterator().next();
     }
 
+    /**
+     * Leave-one-out cross-validation accuracy: for each training example,
+     * run the brute-force vote using every other example and check whether
+     * the held-out point's true label is predicted correctly. Not part of
+     * the shipped prediction path — exists to give an apples-to-apples
+     * accuracy comparison against {@link NaiveBayesClassifier#leaveOneOutAccuracy()}
+     * on the ML Benchmark page.
+     */
+    public double leaveOneOutAccuracy() {
+        if (trainingData.size() < 2) return Double.NaN;
+        int correct = 0;
+        for (int i = 0; i < trainingData.size(); i++) {
+            List<Example> rest = new ArrayList<>(trainingData);
+            Example held = rest.remove(i);
+            Map<String, Integer> votes = votesFrom(bruteForceNearest(held.features(), k, rest));
+            String predicted = votes.isEmpty() ? null : votes.keySet().iterator().next();
+            if (held.label().equals(predicted)) correct++;
+        }
+        return correct / (double) trainingData.size();
+    }
+
     private static double euclidean(double[] a, double[] b) {
         double sum = 0;
         for (int i = 0; i < a.length; i++) {

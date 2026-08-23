@@ -1,6 +1,7 @@
 package service;
 
 import ml.KnnCareerClassifier;
+import ml.NaiveBayesClassifier;
 import model.CareerPath;
 import model.Student;
 
@@ -16,9 +17,17 @@ import java.util.Set;
  *     (with faculty-endorsed skills weighted higher, since a verified skill
  *     is worth more evidence than a self-reported one), plus interest
  *     alignment (transparent, hand-written rules).
- *  2. k-NN score        — majority vote from labelled example profiles.
- * The two are combined 50/50 into a final ranking, and every component of the
- * score is exposed so recommendations remain explainable.
+ *  2. k-NN score        — majority vote from labelled example profiles
+ *     (instance-based learning: compares a profile to its closest examples).
+ *  3. Naive Bayes score — posterior probability from a Gaussian fitted per
+ *     feature per domain (generative learning: asks which domain's fitted
+ *     distributions best explain this profile).
+ * Rules get 50% of the final score and the two learning paradigms split the
+ * other 50% evenly — two different models agreeing is stronger evidence
+ * than either alone. Every component is exposed so recommendations remain
+ * explainable; see the ML Benchmark page for how the two learners compare
+ * on accuracy (leave-one-out cross-validation) and, for k-NN specifically,
+ * lookup strategy (brute force vs k-d tree).
  */
 public class RecommendationService {
 
@@ -29,23 +38,28 @@ public class RecommendationService {
         public final CareerPath career;
         public final double ruleScore;      // 0..1
         public final double knnScore;       // 0..1
+        public final double nbScore;        // 0..1
         public final double finalScore;     // 0..1
         public final List<String> reasons = new ArrayList<>();
 
-        Recommendation(CareerPath career, double ruleScore, double knnScore) {
+        Recommendation(CareerPath career, double ruleScore, double knnScore, double nbScore) {
             this.career = career;
             this.ruleScore = ruleScore;
             this.knnScore = knnScore;
-            this.finalScore = 0.5 * ruleScore + 0.5 * knnScore;
+            this.nbScore = nbScore;
+            this.finalScore = 0.5 * ruleScore + 0.25 * knnScore + 0.25 * nbScore;
         }
     }
 
     private final List<CareerPath> careers;
     private final KnnCareerClassifier classifier;
+    private final NaiveBayesClassifier naiveBayes;
 
-    public RecommendationService(List<CareerPath> careers, KnnCareerClassifier classifier) {
+    public RecommendationService(List<CareerPath> careers, KnnCareerClassifier classifier,
+            NaiveBayesClassifier naiveBayes) {
         this.careers = careers;
         this.classifier = classifier;
+        this.naiveBayes = naiveBayes;
     }
 
     public List<Recommendation> recommend(Student student) {
@@ -53,18 +67,23 @@ public class RecommendationService {
     }
 
     public List<Recommendation> recommend(Student student, Set<String> endorsedSkills) {
+        double[] features = student.toFeatureVector();
         Map<String, Integer> knnVotes = classifier.isReady()
-                ? classifier.predictVotes(student.toFeatureVector())
+                ? classifier.predictVotes(features)
                 : Map.of();
         int k = Math.max(1, knnVotes.values().stream().mapToInt(Integer::intValue).sum());
+        Map<String, Double> nbProbs = naiveBayes.isReady()
+                ? naiveBayes.predictProbabilities(features)
+                : Map.of();
 
         List<Recommendation> results = new ArrayList<>();
         for (CareerPath career : careers) {
             double ruleScore = ruleScore(student, career, endorsedSkills);
             double knnScore = knnVotes.getOrDefault(career.getName(), 0) / (double) k;
+            double nbScore = nbProbs.getOrDefault(career.getName(), 0.0);
 
-            Recommendation rec = new Recommendation(career, ruleScore, knnScore);
-            explain(rec, student, career, knnVotes, endorsedSkills);
+            Recommendation rec = new Recommendation(career, ruleScore, knnScore, nbScore);
+            explain(rec, student, career, knnVotes, nbProbs, endorsedSkills);
             results.add(rec);
         }
         results.sort((a, b) -> Double.compare(b.finalScore, a.finalScore));
@@ -93,8 +112,8 @@ public class RecommendationService {
         return 0.6 * skillPart + 0.4 * interestPart;
     }
 
-    private void explain(Recommendation rec, Student s, CareerPath career,
-                         Map<String, Integer> knnVotes, Set<String> endorsedSkills) {
+    private void explain(Recommendation rec, Student s, CareerPath career, Map<String, Integer> knnVotes,
+                         Map<String, Double> nbProbs, Set<String> endorsedSkills) {
         Set<String> overlap = new HashSet<>(s.getSkills());
         overlap.retainAll(career.getRequiredSkills());
         if (!overlap.isEmpty()) {
@@ -112,6 +131,14 @@ public class RecommendationService {
         Integer votes = knnVotes.get(career.getName());
         if (votes != null && votes > 0) {
             rec.reasons.add(votes + " of your closest matching example profiles chose this path (k-NN).");
+        }
+        Double nbProb = nbProbs.get(career.getName());
+        // Baseline (no signal either way) is 1/domain-count; only call this
+        // out when the probabilistic model is meaningfully above that.
+        double baseline = careers.isEmpty() ? 0 : 1.0 / careers.size();
+        if (nbProb != null && nbProb > baseline * 1.3) {
+            rec.reasons.add(String.format("The probabilistic model estimates a %.0f%% likelihood for this "
+                    + "domain from your interest/CGPA profile (Naive Bayes).", nbProb * 100));
         }
     }
 }

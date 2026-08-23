@@ -99,32 +99,51 @@ reason the app automatically falls back to demo mode.
 
 ## The ML component — pure Java, no libraries
 
-`ml/KnnCareerClassifier` implements k-nearest-neighbours from scratch:
+Two independent learning paradigms sit alongside the transparent rule engine,
+each implemented from scratch against the same 43 labelled example profiles
+in `data/career_training.csv` (5 interest ratings + scaled CGPA → career
+domain):
 
-1. `data/career_training.csv` holds 43 labelled example profiles
-   (5 interest ratings + scaled CGPA → career domain).
-2. A student's feature vector is compared to every example by **Euclidean
-   distance**; the nearest k examples vote on the domain.
-3. The final ranking blends this 50/50 with a transparent rule-based score
-   (skill overlap, weighted higher for faculty-endorsed skills, + interest
-   alignment).
+1. **`ml/KnnCareerClassifier`** — instance-based learning. A student's
+   feature vector is compared to every example by **Euclidean distance**;
+   the nearest k examples vote on the domain.
+2. **`ml/NaiveBayesClassifier`** — generative learning. Fits a Gaussian
+   distribution per feature per domain from the training data, then picks
+   the domain whose fitted distributions best explain the new profile
+   (Bayes' rule, assuming feature independence given the class).
 
-Every recommendation shows both score components and the reasons behind them
-— the ML adds a learning signal without becoming a black box.
+The final ranking is 50% the rule-based score (skill overlap, weighted
+higher for faculty-endorsed skills, + interest alignment) and 50% split
+evenly between the two learners — two different models agreeing on a domain
+is stronger evidence than either alone. Every recommendation shows all three
+score components and the reasons behind them, so the ML adds a learning
+signal without becoming a black box.
 
-**`ml/KdTree`** is a from-scratch k-d tree that answers the same nearest-
-neighbour queries in expected O(log n) instead of brute force's O(n). It uses
-a deterministic secondary sort key so that ties resolve identically to the
-brute-force scan. Verification during development: 0 mismatches against
-brute force across 10,000 randomized trials, all 43 training points as
-queries, 5 hand-picked edge cases (exact duplicates, corner values), and 6
-different values of k — a sign error in the tie-break comparator was caught
-this way partway through development (it initially inverted the eviction
-condition), which is worth mentioning in viva if asked how correctness was
-established rather than just asserted. `kdNearestNeighbours()` is available
-on the classifier for any caller that needs the faster lookup as the training
+**`ml/KdTree`** is a from-scratch k-d tree that answers the same k-NN
+nearest-neighbour queries in expected O(log n) instead of brute force's
+O(n). It uses a deterministic secondary sort key so that ties resolve
+identically to the brute-force scan. `kdNearestNeighbours()` is available on
+the classifier for any caller that needs the faster lookup as the training
 set scales past a few dozen rows; the shipped predictions currently use the
 brute-force path since correctness there needs no argument at all.
+
+**The `/benchmark` page re-runs this verification live, on every request**,
+rather than only asserting it in prose: it checks the k-d tree against
+brute force on all 43 training points as queries, times both lookup
+strategies, and reports leave-one-out cross-validation accuracy for k-NN vs
+Naive Bayes. Two real bugs were caught this way during development, both
+worth mentioning in viva if asked how correctness was established rather
+than just asserted: a sign error in the tie-break comparator that initially
+inverted the eviction condition, and — found only after the benchmark page
+started comparing exact neighbour lists instead of just majority-vote
+outcomes — the k-d tree's final result list was sorted by distance alone,
+so two neighbours exactly tied at the k-th boundary could come out in
+whatever order the priority queue's internal heap happened to yield instead
+of the same deterministic order brute force uses. The set of k neighbours
+chosen was always correct (so votes/predictions were never affected), but
+the *order* silently drifted from brute force's — a good example of how an
+order-insensitive check (majority vote) can hide a real, narrower
+correctness gap that a stricter one (exact list comparison) catches.
 
 ## Interface design
 

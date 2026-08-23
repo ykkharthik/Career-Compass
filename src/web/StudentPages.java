@@ -191,15 +191,17 @@ public final class StudentPages {
         StringBuilder b = new StringBuilder();
         b.append("<h1>Career recommendations</h1><p class=\"sub\">Hybrid ranking: ")
                 .append("50% transparent rules (skill overlap + interest fit, with faculty-verified skills ")
-                .append("weighted higher) and 50% k-NN vote over ")
-                .append(classifier.trainingSize()).append(" example profiles.</p>");
+                .append("weighted higher), 25% k-NN and 25% Naive Bayes — two different learning paradigms over ")
+                .append("the same ").append(classifier.trainingSize())
+                .append(" example profiles (see the ML Benchmark page for how they compare).</p>");
         int rank = 0;
         List<Student> allStudents = students.findAll();
         for (var r : recs) {
             rank++;
             int idx = careers.indexOf(r.career);
             int pct = (int) Math.round(r.finalScore * 100);
-            String split = "RULES " + (int) (r.ruleScore * 100) + "%  &middot;  k-NN " + (int) (r.knnScore * 100) + "%";
+            String split = "RULES " + (int) (r.ruleScore * 100) + "%  &middot;  k-NN " + (int) (r.knnScore * 100)
+                    + "%  &middot;  BAYES " + (int) (r.nbScore * 100) + "%";
             b.append("<div class=\"card").append(rank == 1 ? " lead" : "").append("\">")
                     .append("<span class=\"rank\">")
                     .append(rank == 1 ? "PRIMARY BEARING" : String.format("BEARING %02d", rank))

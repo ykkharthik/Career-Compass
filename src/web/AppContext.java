@@ -65,7 +65,8 @@ public final class AppContext {
             case FACULTY -> "<a href=\"/faculty\">Faculty Dashboard</a>";
             case ADMIN -> "<a href=\"/admin\">Console</a>";
         };
-        return base + bell + "<a href=\"/trends\">Trends</a><a href=\"/logout\">Sign out</a>";
+        return base + bell + "<a href=\"/trends\">Trends</a><a href=\"/benchmark\">ML Benchmark</a>"
+                + "<a href=\"/logout\">Sign out</a>";
     }
 
     public String csrfInput(HttpExchange ex) {

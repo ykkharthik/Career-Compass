@@ -6,6 +6,7 @@ import auth.User;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import ml.KnnCareerClassifier;
+import ml.NaiveBayesClassifier;
 import model.Application;
 import model.CareerPath;
 import model.CloudEngineering;
@@ -71,8 +72,10 @@ public class WebServer {
             new CloudEngineering(), new UiUxDesign(), new ProductManagement());
     private final KnnCareerClassifier classifier =
             new KnnCareerClassifier("data/career_training.csv", 5);
+    private final NaiveBayesClassifier naiveBayes =
+            new NaiveBayesClassifier("data/career_training.csv");
     private final RecommendationService recommender =
-            new RecommendationService(careers, classifier);
+            new RecommendationService(careers, classifier, naiveBayes);
     private final SkillGapService skillGap = new SkillGapService();
     private final CertificationAdvisor certs = new CertificationAdvisor("data/certifications.csv");
     private final InternshipAdvisor internships = new InternshipAdvisor("data/internships.csv");
@@ -95,6 +98,7 @@ public class WebServer {
             notifications, trends, ctx);
     private final RecruiterPages recruiterPages = new RecruiterPages(students, endorsements, recommender,
             applications, notifications, trends, ctx);
+    private final BenchmarkPages benchmarkPages = new BenchmarkPages(classifier, naiveBayes, ctx);
 
     public void start(int port) throws IOException {
         auth.ensureAdminAccount();
@@ -157,6 +161,7 @@ public class WebServer {
 
                 case "/notifications" -> notificationsPage(ex);
                 case "/trends" -> trendsPage(ex);
+                case "/benchmark" -> benchmarkPages.page(ex);
 
                 case "/admin" -> adminPage(ex);
                 case "/admin/delete" -> { if (post(method)) adminDelete(ex); else redirect(ex, "/admin"); }
