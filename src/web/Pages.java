@@ -23,6 +23,12 @@ public final class Pages {
           + "family=IBM+Plex+Mono:wght@400;500;600&display=swap\" rel=\"stylesheet\">";
 
     public static final String CSS = """
+/* Native cross-document view transitions: on browsers that support it
+   (Chromium), navigating between pages - including the redirect straight
+   from /login to the dashboard - cross-fades instead of hard-cutting.
+   Unsupported browsers just ignore this line and navigate as normal. */
+@view-transition{navigation:auto}
+
 :root{
   --abyss:#0B1F2A; --abyss-2:#143543; --chart:#E7EDEA; --surface:#FFFFFF;
   --marker:#C2185B; --marker-soft:#FBE7EF; --depth:#0E7C7B; --depth-soft:#DFF0EE;
@@ -58,7 +64,16 @@ a:hover{border-bottom-color:var(--marker)}
   font-family:var(--mono);letter-spacing:.03em}
 .topbar a:hover{color:#fff;border:none}
 
-.wrap{position:relative;z-index:1;max-width:960px;margin:2.4rem auto 4rem;padding:0 1.25rem}
+.wrap{position:relative;z-index:1;max-width:960px;margin:2.4rem auto 4rem;padding:0 1.25rem;
+  animation:rise .45s ease-out both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.steps .step,.roles-grid .role{animation:fadeIn .5s ease-out both}
+.steps .step:nth-child(1),.roles-grid .role:nth-child(1){animation-delay:.05s}
+.steps .step:nth-child(2),.roles-grid .role:nth-child(2){animation-delay:.12s}
+.steps .step:nth-child(3),.roles-grid .role:nth-child(3){animation-delay:.19s}
+.roles-grid .role:nth-child(4){animation-delay:.26s}
+.roles-grid .role:nth-child(5){animation-delay:.33s}
 
 /* ---------- type ---------- */
 h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,4vw,2.15rem);
@@ -226,7 +241,7 @@ body.signed-out{
   .topbar a{margin-left:0;margin-right:1rem}
   table{font-size:.82rem}
 }
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 """;
 
     /** Top-nav shown when nobody is signed in (landing/login/register/verify). */
