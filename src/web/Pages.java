@@ -140,11 +140,15 @@ input:focus,select:focus,.form-control:focus{outline:2px solid var(--marker);out
   border-color:var(--marker)!important;box-shadow:none!important}
 input[type="checkbox"]{width:auto!important;padding:0!important;margin:0;accent-color:var(--marker);
   cursor:pointer}
-button,.btn{margin-top:1.25rem;padding:.65rem 1.5rem!important;border:none!important;
-  border-radius:0!important;background:var(--abyss)!important;color:#fff!important;
-  font-size:.85rem;cursor:pointer;font-family:var(--mono);letter-spacing:.09em;
-  text-transform:uppercase;transition:background .15s ease}
-button:hover,.btn:hover{background:var(--marker)!important;color:#fff!important}
+/* .btn also gets applied to plain <a> tags (landing-page CTAs), so it needs
+   display:inline-block and to cancel the global a{} underline/border-bottom. */
+button,.btn{display:inline-block;margin-top:1.25rem;padding:.65rem 1.5rem!important;
+  border:none!important;border-radius:0!important;background:var(--abyss)!important;
+  color:#fff!important;font-size:.85rem;cursor:pointer;font-family:var(--mono);
+  letter-spacing:.09em;text-transform:uppercase;transition:background .15s ease;
+  border-bottom:none!important}
+button:hover,.btn:hover{background:var(--marker)!important;color:#fff!important;
+  border-bottom:none!important}
 button.brass,.btn.brass{background:var(--marker)!important}
 button.brass:hover,.btn.brass:hover{background:#9E1349!important}
 button.small,.btn.small{margin:0;padding:.35rem .85rem!important;font-size:.68rem}
@@ -227,15 +231,9 @@ tbody tr:hover,.table tbody tr:hover{background:var(--chart)!important}
 .hero h1{max-width:16ch;font-size:clamp(2rem,5vw,2.9rem)}
 .hero .lede{font-size:1.05rem;max-width:58ch;margin:1rem 0 1.7rem}
 .hero .cta-row{display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:1.9rem}
-.btn{display:inline-block;padding:.7rem 1.6rem;border:none;background:var(--abyss);
-  color:#fff!important;font-size:.85rem;cursor:pointer;font-family:var(--mono);
-  letter-spacing:.09em;text-transform:uppercase;transition:background .15s ease;
-  border-bottom:none!important}
-.btn:hover{background:var(--marker);border-bottom:none}
-.btn.brass{background:var(--marker)}
-.btn.brass:hover{background:#9E1349}
-.btn.ghost{background:transparent;color:var(--abyss)!important;border:1px solid var(--abyss)}
-.btn.ghost:hover{background:var(--abyss);color:#fff!important}
+.btn.ghost{background:transparent!important;color:var(--abyss)!important;
+  border:1px solid var(--abyss)!important}
+.btn.ghost:hover{background:var(--abyss)!important;color:#fff!important}
 .tech-strip{margin:0 0 2rem}
 .tech-strip .chip{background:var(--surface)}
 
