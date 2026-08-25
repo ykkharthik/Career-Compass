@@ -6,8 +6,10 @@ import auth.User;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static web.Pages.esc;
 
@@ -144,15 +146,26 @@ public final class AuthPages {
         Http.html(ex, 200, Pages.shell("Register", Pages.LOGGED_OUT_NAV, body));
     }
 
+    // ADMIN is provisioned separately (AuthService.ensureAdminAccount) and
+    // must never be reachable through this form, however the "role" field is
+    // spelled in a raw POST - an EnumSet allow-list makes that exclusion an
+    // explicit rule here, rather than an accident of a switch's default case.
+    private static final Set<User.Role> SELF_REGISTERABLE_ROLES =
+            EnumSet.of(User.Role.STUDENT, User.Role.RECRUITER, User.Role.MENTOR, User.Role.FACULTY);
+
+    private static User.Role parseRegisterableRole(String requested) {
+        try {
+            User.Role role = User.Role.valueOf(requested);
+            return SELF_REGISTERABLE_ROLES.contains(role) ? role : User.Role.STUDENT;
+        } catch (IllegalArgumentException notARole) {
+            return User.Role.STUDENT;
+        }
+    }
+
     public void doRegister(HttpExchange ex) throws IOException {
         Map<String, String> f = Http.form(ex);
         String email = f.getOrDefault("email", "").trim().toLowerCase();
-        User.Role role = switch (f.getOrDefault("role", "STUDENT")) {
-            case "RECRUITER" -> User.Role.RECRUITER;
-            case "MENTOR" -> User.Role.MENTOR;
-            case "FACULTY" -> User.Role.FACULTY;
-            default -> User.Role.STUDENT;
-        };
+        User.Role role = parseRegisterableRole(f.getOrDefault("role", "STUDENT"));
         String error = auth.beginRegistration(email, f.get("password"), role);
         if (error != null) { registerPage(ex, error); return; }
 

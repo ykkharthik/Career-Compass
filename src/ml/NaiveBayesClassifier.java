@@ -1,6 +1,7 @@
 package ml;
 
 import repository.FileManager;
+import util.Rankings;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -82,7 +83,7 @@ public class NaiveBayesClassifier {
     }
 
     public String predict(double[] features) {
-        return argMax(predictProbabilities(features));
+        return Rankings.argMax(predictProbabilities(features));
     }
 
     private static Map<String, Double> posteriors(double[] features, List<ClassStats> stats) {
@@ -109,10 +110,6 @@ public class NaiveBayesClassifier {
         return result;
     }
 
-    private static String argMax(Map<String, Double> probs) {
-        return probs.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
-    }
-
     private static double logGaussian(double x, double mean, double variance) {
         return -0.5 * Math.log(2 * Math.PI * variance) - ((x - mean) * (x - mean)) / (2 * variance);
     }
@@ -132,7 +129,7 @@ public class NaiveBayesClassifier {
         for (int i = 0; i < trainingData.size(); i++) {
             List<KnnCareerClassifier.Example> rest = new ArrayList<>(trainingData);
             KnnCareerClassifier.Example held = rest.remove(i);
-            String predicted = argMax(posteriors(held.features(), fit(rest)));
+            String predicted = Rankings.argMax(posteriors(held.features(), fit(rest)));
             if (held.label().equals(predicted)) correct++;
         }
         return correct / (double) trainingData.size();

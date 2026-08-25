@@ -5,6 +5,7 @@ import auth.MailService;
 import auth.User;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import exception.InvalidProfileException;
 import ml.KnnCareerClassifier;
 import ml.NaiveBayesClassifier;
 import model.CareerPath;
@@ -35,6 +36,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import static web.Pages.esc;
 
@@ -98,6 +100,11 @@ public class WebServer {
         auth.ensureAdminAccount();
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", this::route);
+        // Without an explicit executor, HttpServer dispatches every request
+        // on a single internal thread - real requests would queue up behind
+        // each other one at a time. A fixed thread pool is what actually
+        // makes this "multithreaded" rather than just claiming to be.
+        server.setExecutor(Executors.newFixedThreadPool(8));
         server.start();
         System.out.println("CareerCompass web app running at http://localhost:" + port);
         System.out.println("Mail delivery: " + (mail.isConfigured()
@@ -162,9 +169,18 @@ public class WebServer {
                 default -> notFound(ex);
             }
         } catch (Exception e) {
+            // Java 21 pattern matching for switch: the exception's actual
+            // type picks the status code, instead of a chain of
+            // instanceof-and-cast checks.
+            int status = switch (e) {
+                case InvalidProfileException ignored -> 400;
+                case NumberFormatException ignored -> 400;
+                case IllegalArgumentException ignored -> 400;
+                default -> 500;
+            };
             String body = "<div class=\"card\"><h1>Something went wrong</h1><p class=\"sub\">"
                     + esc(e.getMessage()) + "</p><p><a href=\"/\">Back home</a></p></div>";
-            html(ex, 500, Pages.shell("Error", "", body));
+            html(ex, status, Pages.shell("Error", "", body));
         }
     }
 

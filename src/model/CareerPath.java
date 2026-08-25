@@ -1,7 +1,7 @@
 package model;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Abstract base for all career domains. Demonstrates inheritance +
@@ -14,14 +14,17 @@ public abstract class CareerPath {
     public abstract Set<String> getRequiredSkills();
     public abstract String[] getTypicalRoles();
 
+    /** A TreeSet, not a hash-based Set: required skills always list alphabetically wherever they're shown. */
     protected static Set<String> skills(String... items) {
-        Set<String> s = new LinkedHashSet<>();
+        Set<String> s = new TreeSet<>();
         for (String i : items) s.add(i.toLowerCase());
         return s;
     }
 
+    // final: every subclass gets its display name through getName() (the
+    // polymorphic hook), never by overriding Object's toString() again.
     @Override
-    public String toString() {
+    public final String toString() {
         return getName();
     }
 }

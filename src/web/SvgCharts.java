@@ -16,7 +16,13 @@ public final class SvgCharts {
     public static String radar(int[] values) {
         double cx = 140, cy = 128, maxR = 70;
         int n = 5;
-        StringBuilder svg = new StringBuilder();
+        // StringBuffer here, not StringBuilder: this is the one HTML-building
+        // spot in the app rendered once per dashboard view rather than
+        // assembled thousands of times per request like the page builders,
+        // so the synchronized-append overhead genuinely doesn't matter -
+        // everywhere else in the app sticks with StringBuilder deliberately,
+        // since there the overhead would.
+        StringBuffer svg = new StringBuffer();
         svg.append("<svg viewBox=\"0 0 280 260\" xmlns=\"http://www.w3.org/2000/svg\" ")
            .append("role=\"img\" aria-label=\"Interest profile radar chart\">");
 

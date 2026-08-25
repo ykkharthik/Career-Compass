@@ -1,41 +1,53 @@
 # CareerCompass – Career Guidance Platform
 
 CS5304 Java Programming project (Chennai Institute of Technology).
-A five-role web application (and still a console app), built on **JDK 21 with
-zero external libraries** — the HTTP server, the SMTP mail client, and every
-piece of the machine-learning pipeline are all written in plain Java.
+A five-role web application (and still a console app), built on **JDK 21**.
+The HTTP server, the SMTP mail client, and every piece of the machine-learning
+pipeline are written in plain Java with zero external libraries. Two
+deliberate exceptions to that, each called out where it matters below:
+**Bootstrap 5** (frontend polish, loaded from its CDN) and **H2** (one
+entity — notifications — persisted through a real database via JDBC instead
+of a CSV file, to demonstrate JDBC/DAO properly rather than just in prose).
 
 ## Run the web app
 
+The H2 driver jar (`lib/h2-*.jar`) needs to be on the classpath alongside
+your own compiled classes — everything else is still plain Java.
+
 ```
-javac -d out $(find src -name "*.java")
-java -cp out web.WebMain
+javac -cp "lib/h2-2.2.224.jar" -d out $(find src -name "*.java")
+java -cp "out:lib/h2-2.2.224.jar" web.WebMain
 ```
 
-Then open **http://localhost:8080**. Use `java -cp out web.WebMain 9090` for a
-different port. Run from the project root so `data/` is found.
+Then open **http://localhost:8080**. Use `java -cp "out:lib/h2-2.2.224.jar" web.WebMain 9090`
+for a different port. Run from the project root so `data/` (and the H2
+database file it creates there) is found.
 
-Windows (PowerShell), if `find` is unavailable:
+Windows (PowerShell), if `find` is unavailable — note the `;` classpath
+separator instead of `:`:
 ```
-javac -d out (Get-ChildItem -Recurse -Filter *.java src | % FullName)
-java -cp out web.WebMain
+javac -cp "lib\h2-2.2.224.jar" -d out (Get-ChildItem -Recurse -Filter *.java src | % FullName)
+java -cp "out;lib\h2-2.2.224.jar" web.WebMain
 ```
 
-The console version still works: `java -cp out Main`
+The console version still works, and doesn't need H2 on its classpath since
+it never touches notifications: `java -cp out Main`
 
 ## Run the tests
 
 ```
-java -cp out test.TestRunner
+java -cp "out:lib/h2-2.2.224.jar" test.TestRunner
 ```
 
-A from-scratch test runner — no JUnit, matching the rest of the project.
-It uses reflection to find every `test*` method across six test classes
-covering both ML classifiers, the k-d tree's correctness (the same
-verification the ML component and `/benchmark` describe, made permanent
-so it can never silently regress), the recommendation blend, skill-gap
-analysis, and auth (registration, login, lockout, password hashing —
-each against its own scratch CSV file, never `data/users.csv`).
+(`out;lib\h2-2.2.224.jar` on Windows.) A from-scratch test runner — no
+JUnit, matching the rest of the project. It uses reflection to find every
+`test*` method across seven test classes covering both ML classifiers, the
+k-d tree's correctness (the same verification the ML component and
+`/benchmark` describe, made permanent so it can never silently regress),
+the recommendation blend, skill-gap analysis, the JDBC-backed notification
+repository, and auth (registration, login, lockout, password hashing) —
+every test that touches persistence uses its own scratch file, never the
+real `data/` files.
 
 ## Demo accounts (password for all: `demo123`, admin: `admin123`)
 
@@ -111,10 +123,27 @@ reason the app automatically falls back to demo mode.
 - OTP email verification (3 attempts) before an account activates
 - Passwords stored as salted SHA-256 hashes, never in plain text
 - **Brute-force lockout**: 5 failed logins locks the account for 5 minutes
-- **Session expiry**: sessions idle out after 30 minutes
+- **Session expiry**: sessions idle out after 30 minutes, and a daemon
+  background thread (`SessionManager`'s constructor) sweeps every 5 minutes
+  for sessions that went idle but were never touched again to trigger lazy
+  eviction — otherwise an abandoned session (a closed tab, no explicit
+  logout) would sit in memory forever
 - **CSRF protection**: every authenticated state-changing form carries a
   per-session token, checked on submit
 - Role-based access control enforced on every route, not just hidden nav links
+
+## Persistence: CSV, and one entity via real JDBC
+
+Every entity is CSV-backed except one: `NotificationRepository` persists to
+an embedded **H2** database over **JDBC**, implementing a generic `Dao<T>`
+interface (`findAll`/`findById`/`save`) that any storage backend could sit
+behind. Converting all seven repositories to a database was judged not
+worth the risk this close to a deadline; one clean, real conversion
+demonstrates the same JDBC + DAO pattern properly, with prepared statements
+throughout (never string-concatenated SQL) and its own test coverage
+(`test/NotificationRepositoryTest`), rather than spreading that risk across
+every entity in the app. See **Run the web app** above for the one extra
+step this adds: the H2 driver jar needs to be on the classpath.
 
 ## The ML component — pure Java, no libraries
 
@@ -217,6 +246,7 @@ graph TD
     KNN --> KDT[KdTree<br/><i>O(log n) lookup</i>]
 
     SP & RP & MP & FP & AdP --> REPO[(repository/*<br/>CSV-backed)]
+    ShP --> NOTIF[(NotificationRepository<br/><i>JDBC + H2</i>)]
     CTX --> AUTH[AuthService]
 ```
 
@@ -245,17 +275,25 @@ src/
 │                               Certification, Internship, Mentor,
 │                               MentorshipRequest, Endorsement, Faculty,
 │                               Notification, Application
-├── repository/                 FileManager (CSV I/O) + one repository per
-│                               entity above, all CRUD over CSV
+├── repository/                 FileManager (CSV I/O), Dao<T> (generic DAO
+│                               interface), one repository per entity — all
+│                               CRUD over CSV except NotificationRepository,
+│                               which implements Dao<Notification> via JDBC/H2
 ├── ml/                         KnnCareerClassifier, NaiveBayesClassifier, KdTree
 ├── service/                    RecommendationService (rules + k-NN + Naive
 │                               Bayes blend), SkillGapService,
 │                               CertificationAdvisor, InternshipAdvisor,
 │                               PercentileService, TrendsService
+├── util/                       Rankings — generic, bounded-type ranking
+│                               helpers shared by TrendsService and NaiveBayesClassifier
 ├── recruiter/                  RecruiterPortal (console recruiter view)
 ├── menu/                       Menu (console UI)
 ├── test/                       TestRunner + Assert (from-scratch test suite)
 └── exception/                  InvalidProfileException
+lib/
+└── h2-2.2.224.jar              H2's JDBC driver — the one external jar this
+                                project depends on; a single pure-Java file,
+                                no native libraries
 data/
 ├── career_training.csv        43 labelled profiles for k-NN / Naive Bayes
 ├── certifications.csv         28 certifications across 6 domains
@@ -263,19 +301,66 @@ data/
 ├── users.csv / students.csv   accounts and profiles
 ├── mentors.csv / mentorship_requests.csv
 ├── faculty.csv / endorsements.csv
-├── applications.csv / notifications.csv
+├── applications.csv           applications, still CSV-backed
+├── notifications.mv.db        the H2 database file (created on first run)
 └── mail.properties.example    template for real email sending
 ```
 
 ## Java concepts demonstrated
 
-Inheritance and polymorphism (CareerPath hierarchy) · abstract classes ·
-records (used throughout the ML and domain-model code) · interfaces and
-lambdas · collections and streams · custom checked exception ·
-try-with-resources file I/O · enums · Optional · switch expressions ·
-recursion (k-d tree build/search) · priority queues · multithreading (HTTP
-thread pool) · sockets and SSL · `SecureRandom` and `MessageDigest` · HTTP
-request handling · reflection (the test runner discovers test methods at
-run time rather than listing them by hand) · basic probability/statistics
-(Gaussian Naive Bayes: per-class mean/variance, log-space posteriors,
-softmax normalization).
+**OOP fundamentals** — inheritance and polymorphism (the `CareerPath`
+hierarchy), abstract classes and abstract methods, encapsulation, static
+members, `final` methods and classes (e.g. `CareerPath.toString()` is
+`final` — every subclass supplies a name through the abstract `getName()`
+hook instead), a `protected` static member (`CareerPath.skills()`),
+constructors, access specifiers.
+
+**Interfaces** — `repository.Dao<T>`, a generic interface implemented by
+`NotificationRepository`; the JDK's functional interfaces (`Comparator`,
+`Runnable`) used throughout via lambdas.
+
+**Generic programming** — `Dao<T>` (a generic interface) and
+`util.Rankings` (generic, bounded-type methods: `<K, V extends
+Comparable<V>>`), extracted specifically because the same "sort a map by
+value" and "find the best entry" logic had been hand-rolled separately in
+`TrendsService` and `NaiveBayesClassifier`.
+
+**Collections framework** — `List`/`Set`/`Map` and their implementations
+used purposefully rather than defaulting to one everywhere: `ArrayList`
+(most lists), `LinkedList` (`TrendsService`'s CGPA accumulator — append then
+one full traversal, never random access), `HashSet`/`LinkedHashSet`
+(skill sets), `TreeSet` (`CareerPath.skills()` — required skills always
+list alphabetically), `EnumSet` (`AuthPages`' self-registerable-role
+allow-list), an explicit `Iterator` with `.remove()` (`MentorRepository.save`
+— for-each can't safely remove while traversing), `Optional`, records (used
+throughout the ML and domain-model code), autoboxing, for-each.
+
+**Strings** — `String`/`StringBuilder` throughout (chosen deliberately over
+`StringBuffer` in every HTML-building hot path, since there's no shared
+buffer across threads to synchronize); `StringBuffer` used once, in
+`SvgCharts`, where that overhead genuinely doesn't matter.
+
+**Exceptions and I/O** — a custom checked exception
+(`InvalidProfileException`), try-with-resources file I/O, byte streams
+(`HttpExchange`'s `OutputStream`) and character streams
+(`BufferedReader`/`BufferedWriter` in `FileManager`), console I/O
+(`Scanner` in the console `Menu`), Java 21 pattern matching for switch on
+exception type (`WebServer.route`'s error handler picks an HTTP status
+from the exception's runtime type, not a chain of `instanceof` checks).
+
+**Multithreading** — a real fixed thread pool (`Executors.newFixedThreadPool`,
+`WebServer.start`) so the HTTP server actually dispatches requests
+concurrently instead of one at a time; a daemon background thread
+(`SessionManager`) that sweeps expired sessions on a timer, using
+`ConcurrentHashMap` for thread-safe access from every request thread at once.
+
+**JDBC and DAO** — `NotificationRepository` (see **Persistence** above):
+`Connection`/`PreparedStatement`/`ResultSet`, an embedded H2 database, and
+the DAO pattern via `Dao<T>`.
+
+**Other** — enums (`User.Role`), switch expressions, recursion (k-d tree
+build/search), priority queues, sockets and SSL (`SmtpMailSender`),
+`SecureRandom` and `MessageDigest`, reflection (the test runner discovers
+`test*` methods at run time instead of listing them by hand), basic
+probability/statistics (Gaussian Naive Bayes: per-class mean/variance,
+log-space posteriors, softmax normalization).

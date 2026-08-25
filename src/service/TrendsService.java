@@ -3,12 +3,13 @@ package service;
 import model.Application;
 import model.CareerPath;
 import model.Student;
+import util.Rankings;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Platform-wide analytics computed from the same data the recommendation
@@ -31,7 +32,7 @@ public class TrendsService {
             String top = recs.get(0).career.getName();
             counts.merge(top, 1, Integer::sum);
         }
-        return sortByValueDesc(counts);
+        return Rankings.topByValue(counts, -1);
     }
 
     /** Frequency of every skill across all student profiles, most common first. */
@@ -40,7 +41,7 @@ public class TrendsService {
         for (Student s : students)
             for (String skill : s.getSkills())
                 counts.merge(skill, 1, Integer::sum);
-        return top(sortByValueDesc(counts), limit);
+        return Rankings.topByValue(counts, limit);
     }
 
     /**
@@ -60,7 +61,7 @@ public class TrendsService {
             for (String missing : skillGap.missingSkills(s, top))
                 counts.merge(missing, 1, Integer::sum);
         }
-        return top(sortByValueDesc(counts), limit);
+        return Rankings.topByValue(counts, limit);
     }
 
     /** Application counts per pipeline status, in a fixed funnel order. */
@@ -80,7 +81,11 @@ public class TrendsService {
             var endorsed = endorsedSkillsByStudent.getOrDefault(s.getEmail(), Set.of());
             var recs = recommender.recommend(s, endorsed);
             if (recs.isEmpty()) continue;
-            byDomain.computeIfAbsent(recs.get(0).career.getName(), d -> new java.util.ArrayList<>())
+            // A LinkedList here, not ArrayList: every use of this list is an
+            // append followed later by one full traversal (the average()
+            // below) - never a random-access lookup - so there's no reason
+            // to pay ArrayList's array-resizing cost for capability we never use.
+            byDomain.computeIfAbsent(recs.get(0).career.getName(), d -> new LinkedList<>())
                     .add(s.getCgpa());
         }
         Map<String, Double> averages = new LinkedHashMap<>();
@@ -91,20 +96,4 @@ public class TrendsService {
         return averages;
     }
 
-    private Map<String, Integer> sortByValueDesc(Map<String, Integer> map) {
-        return map.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (a, b) -> a, LinkedHashMap::new));
-    }
-
-    private Map<String, Integer> top(Map<String, Integer> sorted, int limit) {
-        Map<String, Integer> out = new LinkedHashMap<>();
-        int i = 0;
-        for (var entry : sorted.entrySet()) {
-            if (i++ >= limit) break;
-            out.put(entry.getKey(), entry.getValue());
-        }
-        return out;
-    }
 }

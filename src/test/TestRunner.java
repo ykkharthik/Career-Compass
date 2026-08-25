@@ -24,6 +24,7 @@ public final class TestRunner {
                 KdTreeCorrectnessTest.class,
                 RecommendationServiceTest.class,
                 SkillGapServiceTest.class,
+                NotificationRepositoryTest.class,
                 AuthServiceTest.class,
         };
 
