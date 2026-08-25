@@ -42,25 +42,21 @@ public final class AuthPages {
                 + "<span class=\"eyebrow\">Career guidance platform</span>"
                 + "<h1>Chart your course from CGPA and skills to your best-fit career.</h1>"
                 + "<p class=\"lede\">CareerCompass ranks six career domains against a student's profile "
-                + "using a hybrid engine — transparent rules plus a from-scratch k-nearest-neighbours "
-                + "model — then closes the loop with internships, mentorship, and faculty-verified skills. "
-                + "Five roles, one shared platform.</p>"
+                + "using a hybrid engine, combining transparent rules with two from-scratch machine "
+                + "learning models, then closes the loop with internships, mentorship, and "
+                + "faculty-verified skills. Five roles, one shared platform.</p>"
                 + "<div class=\"cta-row\">"
                 + "<a class=\"btn brass\" href=\"/register\">Create an account</a>"
-                + "<a class=\"btn ghost\" href=\"/login\">Sign in</a></div>"
-                + "<div class=\"chips tech-strip\">"
-                + chip("JDK 21") + chip("Zero external libraries") + chip("Custom HTTP server")
-                + chip("k-NN + k-d tree, from scratch") + chip("SMTP over raw sockets")
-                + "</div></div>"
+                + "<a class=\"btn ghost\" href=\"/login\">Sign in</a></div></div>"
 
                 + "<h2>How it works</h2>"
                 + "<div class=\"steps\">"
-                + step("01", "Build a profile", "CGPA, self-reported skills, and five interest ratings — "
+                + step("01", "Build a profile", "CGPA, self-reported skills, and five interest ratings, "
                     + "visualised as a radar chart.")
-                + step("02", "Get ranked, explained", "Six domains scored 50% rule-based, 50% k-NN vote, "
-                    + "each with the reasons and a peer percentile.")
+                + step("02", "Get ranked, explained", "Six domains scored 50% rule-based, 25% k-NN, "
+                    + "25% Naive Bayes, each with the reasons and a peer percentile.")
                 + step("03", "Close the loop", "Apply to internships, request mentorship, and get skills "
-                    + "faculty-endorsed — every step notifies you.")
+                    + "faculty-endorsed, every step notifies you.")
                 + "</div>"
 
                 + "<h2>Five roles, one platform</h2>"
@@ -70,24 +66,10 @@ public final class AuthPages {
                 + role("Mentor", "Set up a profile, accept requests")
                 + role("Faculty", "Endorse verified student skills")
                 + role("Admin", "Platform-wide account management")
-                + "</div>"
-
-                + "<h2>Try it without registering</h2>"
-                + "<div class=\"card\"><p class=\"sub\" style=\"margin-bottom:1rem\">"
-                + "Every demo account below uses the password shown. Full list of nine seeded students "
-                + "in the README.</p>"
-                + "<table><tr><th>Email</th><th>Role</th><th>Password</th></tr>"
-                + demoRow("priya@cit.edu.in", "Student &middot; Data Science profile", "demo123")
-                + demoRow("recruiter@demo.com", "Recruiter", "demo123")
-                + demoRow("mentor@demo.com", "Mentor &middot; Ravi Chandran, Data Science", "demo123")
-                + demoRow("faculty@demo.com", "Faculty &middot; Dr. S. Kumar", "demo123")
-                + demoRow("admin@careercompass.com", "Admin", "admin123")
-                + "</table></div>";
+                + "</div>";
 
         Http.html(ex, 200, Pages.shell("Home", Pages.LOGGED_OUT_NAV, body));
     }
-
-    private static String chip(String text) { return "<span class=\"chip\">" + text + "</span>"; }
 
     private static String step(String num, String title, String desc) {
         return "<div class=\"step\"><span class=\"num\">" + num + "</span>"
@@ -96,11 +78,6 @@ public final class AuthPages {
 
     private static String role(String name, String desc) {
         return "<div class=\"role\"><b>" + name + "</b><span>" + desc + "</span></div>";
-    }
-
-    private static String demoRow(String email, String role, String password) {
-        return "<tr><td><code>" + esc(email) + "</code></td><td>" + role
-                + "</td><td><code>" + esc(password) + "</code></td></tr>";
     }
 
     // ------------------------------ login ------------------------------
