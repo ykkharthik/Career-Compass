@@ -5,13 +5,12 @@ this is written to be talked, not read. Pause where marked.*
 
 ---
 
-Good morning/afternoon everyone, thank you for having me. I'd like to
-start with a question: how did you actually figure out what career path to
-go into? For most people it's either some vague "follow your passion"
-advice, or one of those online quizzes that spits out a result with zero
-explanation for why. Neither of those really helps you make a decision.
-That's the gap my teammate and I wanted to close, and that's where
-CareerCompass came from.
+Good morning/afternoon everyone, thank you for having me. Most students
+end up choosing a career path through one of two ways: vague "follow your
+passion" advice, or an online quiz that hands them a result with no
+explanation behind it. Neither of those actually helps someone make a
+real decision. That's the gap my teammate and I wanted to close, and
+that's where CareerCompass came from.
 
 So here's what it actually does. You sign up as a student, put in your
 CGPA, your skills, rate a few interests, and it gives you a ranked list of
