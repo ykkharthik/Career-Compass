@@ -23,6 +23,20 @@ java -cp out web.WebMain
 
 The console version still works: `java -cp out Main`
 
+## Run the tests
+
+```
+java -cp out test.TestRunner
+```
+
+A from-scratch test runner — no JUnit, matching the rest of the project.
+It uses reflection to find every `test*` method across six test classes
+covering both ML classifiers, the k-d tree's correctness (the same
+verification the ML component and `/benchmark` describe, made permanent
+so it can never silently regress), the recommendation blend, skill-gap
+analysis, and auth (registration, login, lockout, password hashing —
+each against its own scratch CSV file, never `data/users.csv`).
+
 ## Demo accounts (password for all: `demo123`, admin: `admin123`)
 
 | Email | Role |
@@ -127,11 +141,14 @@ the classifier for any caller that needs the faster lookup as the training
 set scales past a few dozen rows; the shipped predictions currently use the
 brute-force path since correctness there needs no argument at all.
 
-**The `/benchmark` page re-runs this verification live, on every request**,
-rather than only asserting it in prose: it checks the k-d tree against
-brute force on all 43 training points as queries, times both lookup
-strategies, and reports leave-one-out cross-validation accuracy for k-NN vs
-Naive Bayes. Two real bugs were caught this way during development, both
+**The `/benchmark` page** (reachable directly at that URL once signed in —
+deliberately left out of the nav, since it's a developer diagnostics page
+rather than something a student or recruiter needs) **re-runs this
+verification live, on every request**, rather than only asserting it in
+prose: it checks the k-d tree against brute force on all 43 training
+points as queries, times both lookup strategies, and reports leave-one-out
+cross-validation accuracy for k-NN vs Naive Bayes. Two real bugs were
+caught this way during development, both
 worth mentioning in viva if asked how correctness was established rather
 than just asserted: a sign error in the tie-break comparator that initially
 inverted the eviction condition, and — found only after the benchmark page
@@ -156,35 +173,74 @@ recommendations page — a graduated scale with a needle at each domain's
 score. A hand-built SVG radar chart visualizes each student's five interest
 dimensions with no charting library.
 
-## Package structure
+## Architecture
+
+`WebServer` is a thin router — every role's pages live in their own class,
+each depending only on the repositories/services it actually needs, and
+sharing session/access-control logic through `AppContext` rather than
+duplicating it:
+
+```mermaid
+graph TD
+    WM[WebMain] --> WS[WebServer<br/><i>router</i>]
+    WS --> AP[AuthPages<br/><i>landing/login/register/verify</i>]
+    WS --> SP[StudentPages]
+    WS --> RP[RecruiterPages]
+    WS --> MP[MentorPages]
+    WS --> FP[FacultyPages]
+    WS --> ShP[SharedPages<br/><i>notifications/trends</i>]
+    WS --> AdP[AdminPages]
+    WS --> BP[BenchmarkPages<br/><i>dev-only, unlinked</i>]
+
+    AP & SP & RP & MP & FP & ShP & AdP --> CTX[AppContext<br/><i>session · CSRF · nav</i>]
+    SP & RP --> REC[RecommendationService]
+    REC --> RULE[rule engine<br/>50%]
+    REC --> KNN[KnnCareerClassifier<br/>25%]
+    REC --> NB[NaiveBayesClassifier<br/>25%]
+    KNN --> KDT[KdTree<br/><i>O(log n) lookup</i>]
+
+    SP & RP & MP & FP & AdP --> REPO[(repository/*<br/>CSV-backed)]
+    CTX --> AUTH[AuthService]
+```
 
 ```
 src/
 ├── Main.java                  console entry point
 ├── web/
-│   ├── WebMain.java           web entry point  → http://localhost:8080
-│   ├── WebServer.java         routes + HTML rendering (com.sun.net.httpserver)
-│   ├── SessionManager.java    cookie sessions, CSRF tokens, idle expiry
-│   ├── SvgCharts.java         hand-built interest radar chart
-│   └── Pages.java             CSS + page shell
-├── auth/                      User, AuthService (register/login/lockout),
-│                              EmailVerifier, MailService, SmtpMailSender
-├── model/                     Student, abstract CareerPath + 6 subclasses,
-│                              Certification, Internship, Mentor,
-│                              MentorshipRequest, Endorsement, Faculty,
-│                              Notification, Application
-├── repository/                FileManager (CSV I/O) + one repository per
-│                              entity above, all CRUD over CSV
-├── ml/                        KnnCareerClassifier, KdTree
-├── service/                   RecommendationService (hybrid + endorsement
-│                              weighting), SkillGapService,
-│                              CertificationAdvisor, InternshipAdvisor,
-│                              PercentileService, TrendsService
-├── recruiter/                 RecruiterPortal (console recruiter view)
-├── menu/                      Menu (console UI)
-└── exception/                 InvalidProfileException
+│   ├── WebMain.java            web entry point  → http://localhost:8080
+│   ├── WebServer.java          router only (com.sun.net.httpserver) + shared HTTP plumbing
+│   ├── AppContext.java         session/CSRF/nav — shared by every page class below
+│   ├── Http.java               stateless request/response helpers
+│   ├── AuthPages.java          landing, login, register, verify
+│   ├── StudentPages.java       dashboard, recommendations, applications, mentors
+│   ├── RecruiterPages.java     candidate search, shortlist, application pipeline
+│   ├── MentorPages.java        mentor profile + request accept/decline
+│   ├── FacultyPages.java       faculty profile + skill endorsement
+│   ├── SharedPages.java        notifications, trends (any signed-in role)
+│   ├── AdminPages.java         account/profile management
+│   ├── BenchmarkPages.java     live ML verification (dev-only, not in nav)
+│   ├── SessionManager.java     cookie sessions, CSRF tokens, idle expiry
+│   ├── SvgCharts.java          hand-built interest radar chart
+│   └── Pages.java              CSS + page shell + shared HTML helpers
+├── auth/                       User, AuthService (register/login/lockout),
+│                               EmailVerifier, MailService, SmtpMailSender
+├── model/                      Student, abstract CareerPath + 6 subclasses,
+│                               Certification, Internship, Mentor,
+│                               MentorshipRequest, Endorsement, Faculty,
+│                               Notification, Application
+├── repository/                 FileManager (CSV I/O) + one repository per
+│                               entity above, all CRUD over CSV
+├── ml/                         KnnCareerClassifier, NaiveBayesClassifier, KdTree
+├── service/                    RecommendationService (rules + k-NN + Naive
+│                               Bayes blend), SkillGapService,
+│                               CertificationAdvisor, InternshipAdvisor,
+│                               PercentileService, TrendsService
+├── recruiter/                  RecruiterPortal (console recruiter view)
+├── menu/                       Menu (console UI)
+├── test/                       TestRunner + Assert (from-scratch test suite)
+└── exception/                  InvalidProfileException
 data/
-├── career_training.csv        43 labelled profiles for k-NN
+├── career_training.csv        43 labelled profiles for k-NN / Naive Bayes
 ├── certifications.csv         28 certifications across 6 domains
 ├── internships.csv            20 internship listings with prerequisites
 ├── users.csv / students.csv   accounts and profiles
@@ -202,4 +258,7 @@ lambdas · collections and streams · custom checked exception ·
 try-with-resources file I/O · enums · Optional · switch expressions ·
 recursion (k-d tree build/search) · priority queues · multithreading (HTTP
 thread pool) · sockets and SSL · `SecureRandom` and `MessageDigest` · HTTP
-request handling.
+request handling · reflection (the test runner discovers test methods at
+run time rather than listing them by hand) · basic probability/statistics
+(Gaussian Naive Bayes: per-class mean/variance, log-space posteriors,
+softmax normalization).
