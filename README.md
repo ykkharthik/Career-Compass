@@ -48,6 +48,11 @@ each against its own scratch CSV file, never `data/users.csv`).
 | ananya@cit.edu.in | Student — Product-Management-leaning profile |
 | recruiter@demo.com | Recruiter |
 | mentor@demo.com | Mentor — Ravi Chandran, Data Science, 10 yrs experience |
+| swe.mentor@demo.com | Mentor — Ananth Rao, Software Engineering |
+| security.mentor@demo.com | Mentor — Divya Menon, Cybersecurity |
+| cloud.mentor@demo.com | Mentor — Karthik Iyer, Cloud & DevOps Engineering |
+| design.mentor@demo.com | Mentor — Priyanka Shah, UI/UX Design |
+| pm.mentor@demo.com | Mentor — Rohan Verma, Product Management |
 | faculty@demo.com | Faculty — Dr. S. Kumar, Computer Science dept |
 | admin@careercompass.com | Admin (`admin123`) |
 
