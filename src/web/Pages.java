@@ -22,6 +22,38 @@ public final class Pages {
           + "family=IBM+Plex+Sans:wght@400;500;600&"
           + "family=IBM+Plex+Mono:wght@400;500;600&display=swap\" rel=\"stylesheet\">";
 
+    /**
+     * Bootstrap 5, loaded from its CDN — the same pattern already used above
+     * for Google Fonts. This is the one deliberate exception to the
+     * "zero external libraries" story (see README): it supplies the base
+     * component/utility layer (navbar collapse, button/table/form resets,
+     * spacing utilities), while style.css layers the existing brand look
+     * (ink panel, magenta/teal/gold accents, monospace readouts) on top —
+     * loaded after Bootstrap so brand rules win the cascade.
+     */
+    public static final String BOOTSTRAP_CSS =
+            "<link rel=\"stylesheet\" "
+          + "href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css\">";
+
+    /**
+     * Bootstrap's JS bundle (for the navbar's mobile collapse toggle), plus a
+     * small progressive-enhancement script that retrofits Bootstrap's
+     * component classes (.btn, .form-control, .table) onto the existing
+     * hand-written markup by selector, so every page gets Bootstrap's
+     * component styling without editing each of the ~9 page-builder classes
+     * by hand. Placed at the end of body, after all content, so every
+     * element already exists when it runs.
+     */
+    public static final String BOOTSTRAP_JS =
+            "<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js\"></script>"
+          + "<script>(function(){"
+          + "document.querySelectorAll('button').forEach(function(b){b.classList.add('btn')});"
+          + "document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]),select')"
+          + ".forEach(function(el){el.classList.add('form-control')});"
+          + "document.querySelectorAll('table').forEach(function(t){"
+          + "t.classList.add('table','table-hover','align-middle')});"
+          + "})();</script>";
+
     public static final String CSS = """
 /* Native cross-document view transitions: on browsers that support it
    (Chromium), navigating between pages - including the redirect straight
@@ -59,7 +91,6 @@ a:hover{border-bottom-color:var(--marker)}
 .topbar .mark{width:26px;height:26px;flex:none}
 .topbar .brand{font-family:var(--display);font-weight:800;font-size:1.05rem;
   letter-spacing:.09em;text-transform:uppercase}
-.topbar .spacer{flex:1}
 .topbar a{color:#BFD3D0;font-size:.82rem;margin-left:1.3rem;border:none;
   font-family:var(--mono);letter-spacing:.03em}
 .topbar a:hover{color:#fff;border:none}
@@ -95,22 +126,29 @@ h2{font-family:var(--display);font-weight:700;font-size:1.05rem;
 /* ---------- forms ---------- */
 label{display:block;font-family:var(--mono);font-size:.7rem;color:var(--slate);
   margin:1rem 0 .3rem;text-transform:uppercase;letter-spacing:.12em}
-input,select{width:100%;padding:.6rem .75rem;border:1px solid var(--line);
-  border-radius:0;font-size:1rem;font-family:var(--body);
-  background:var(--surface);color:var(--abyss)}
-input:focus,select:focus{outline:2px solid var(--marker);outline-offset:0;
-  border-color:var(--marker)}
-input[type="checkbox"]{width:auto;padding:0;margin:0;accent-color:var(--marker);
+/* Bootstrap's .form-control/.btn win on class-vs-element specificity once the
+   enhancement script (see BOOTSTRAP_JS) adds them, so these rules target both
+   the bare element (pre-enhancement) and the Bootstrap class (post-enhancement)
+   together, with !important on anything Bootstrap's own .form-control/.btn
+   rules would otherwise out-specify - the brand look is the point, Bootstrap
+   supplies the plumbing underneath it. */
+input,select,.form-control{width:100%!important;padding:.6rem .75rem!important;
+  border:1px solid var(--line)!important;border-radius:0!important;font-size:1rem;
+  font-family:var(--body);background:var(--surface)!important;color:var(--abyss)!important;
+  box-shadow:none!important}
+input:focus,select:focus,.form-control:focus{outline:2px solid var(--marker);outline-offset:0;
+  border-color:var(--marker)!important;box-shadow:none!important}
+input[type="checkbox"]{width:auto!important;padding:0!important;margin:0;accent-color:var(--marker);
   cursor:pointer}
-button{margin-top:1.25rem;padding:.65rem 1.5rem;border:none;border-radius:0;
-  background:var(--abyss);color:#fff;font-size:.85rem;cursor:pointer;
-  font-family:var(--mono);letter-spacing:.09em;text-transform:uppercase;
-  transition:background .15s ease}
-button:hover{background:var(--marker)}
-button.brass{background:var(--marker)}
-button.brass:hover{background:#9E1349}
-button.small{margin:0;padding:.35rem .85rem;font-size:.68rem}
-button.danger{background:#9E1349}
+button,.btn{margin-top:1.25rem;padding:.65rem 1.5rem!important;border:none!important;
+  border-radius:0!important;background:var(--abyss)!important;color:#fff!important;
+  font-size:.85rem;cursor:pointer;font-family:var(--mono);letter-spacing:.09em;
+  text-transform:uppercase;transition:background .15s ease}
+button:hover,.btn:hover{background:var(--marker)!important;color:#fff!important}
+button.brass,.btn.brass{background:var(--marker)!important}
+button.brass:hover,.btn.brass:hover{background:#9E1349!important}
+button.small,.btn.small{margin:0;padding:.35rem .85rem!important;font-size:.68rem}
+button.danger,.btn.danger{background:#9E1349!important}
 
 /* ---------- messages ---------- */
 .note{background:var(--sand-soft);border-left:3px solid var(--sand);
@@ -157,12 +195,13 @@ button.danger{background:#9E1349}
 .chip.need{background:var(--marker-soft);border-color:var(--marker);color:#8E1140}
 
 /* ---------- tables ---------- */
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th{font-family:var(--mono);color:var(--slate);text-transform:uppercase;
-  font-size:.68rem;letter-spacing:.12em;text-align:left;padding:.5rem .65rem;
-  border-bottom:2px solid var(--abyss)}
-td{padding:.65rem;border-bottom:1px solid var(--line);vertical-align:top}
-tbody tr:hover{background:var(--chart)}
+table,.table{width:100%!important;border-collapse:collapse!important;font-size:.9rem;
+  color:var(--abyss)!important;--bs-table-bg:transparent;--bs-table-hover-bg:var(--chart)}
+th,.table th{font-family:var(--mono);color:var(--slate);text-transform:uppercase;
+  font-size:.68rem;letter-spacing:.12em;text-align:left;padding:.5rem .65rem!important;
+  border-bottom:2px solid var(--abyss)!important}
+td,.table td{padding:.65rem!important;border-bottom:1px solid var(--line)!important;vertical-align:top}
+tbody tr:hover,.table tbody tr:hover{background:var(--chart)!important}
 .badge{font-family:var(--mono);font-size:.68rem;padding:.2rem .55rem;
   letter-spacing:.08em;text-transform:uppercase;font-weight:600}
 .badge.ready{background:var(--depth-soft);color:#0A5F5E;border:1px solid var(--depth)}
@@ -263,11 +302,19 @@ body.signed-out{
         return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
                 + "<title>" + title + " \u00B7 CareerCompass</title>"
-                + FONTS
+                + FONTS + BOOTSTRAP_CSS
+                // /style.css loads last so the brand theme wins the cascade over Bootstrap's defaults.
                 + "<link rel=\"stylesheet\" href=\"/style.css\"></head><body" + bodyClass + ">"
-                + "<header class=\"topbar\">" + MARK
-                + "<span class=\"brand\">CareerCompass</span><span class=\"spacer\"></span>"
-                + nav + "</header><main class=\"wrap\">" + body + "</main></body></html>";
+                + "<nav class=\"navbar navbar-expand-md navbar-dark topbar\">"
+                + "<div class=\"container-fluid\">"
+                + "<a class=\"navbar-brand d-flex align-items-center gap-2\" href=\"/\">" + MARK
+                + "<span class=\"brand\">CareerCompass</span></a>"
+                + "<button class=\"navbar-toggler\" type=\"button\" data-bs-toggle=\"collapse\" "
+                + "data-bs-target=\"#ccNav\" aria-controls=\"ccNav\" aria-expanded=\"false\" "
+                + "aria-label=\"Toggle navigation\"><span class=\"navbar-toggler-icon\"></span></button>"
+                + "<div class=\"collapse navbar-collapse\" id=\"ccNav\">"
+                + "<div class=\"navbar-nav ms-auto\">" + nav + "</div></div></div></nav>"
+                + "<main class=\"wrap\">" + body + "</main>" + BOOTSTRAP_JS + "</body></html>";
     }
 
     public static String esc(String s) {

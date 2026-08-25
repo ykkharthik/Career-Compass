@@ -169,14 +169,26 @@ correctness gap that a stricter one (exact list comparison) catches.
 
 ## Interface design
 
-Hand-written HTML and CSS (no Bootstrap, no React, no build step), themed as
-a navigation chart because the engine literally computes a bearing and a
+Hand-written HTML and CSS, no React and no build step, themed as a
+navigation chart because the engine literally computes a bearing and a
 distance: chart-paper graticule, deep ink panel, magenta for markers (the
 colour real charts reserve for aids to navigation), monospaced readouts for
 every number. The signature element is the **bearing tape** on the
 recommendations page — a graduated scale with a needle at each domain's
 score. A hand-built SVG radar chart visualizes each student's five interest
 dimensions with no charting library.
+
+**Bootstrap 5** is loaded from its CDN (`web/Pages.BOOTSTRAP_CSS/BOOTSTRAP_JS`
+— the same pattern already used for Google Fonts) as the one deliberate
+exception to the zero-external-libraries story above: it supplies the
+navbar's mobile collapse behaviour and the base component/utility layer,
+while a small progressive-enhancement script retrofits Bootstrap's
+`.btn`/`.form-control`/`.table` classes onto the existing hand-written
+markup by selector — so every page picks up Bootstrap's component
+plumbing without hand-editing each of the ~9 page-builder classes — and
+`style.css` loads after Bootstrap so the existing brand theme (ink panel,
+magenta/teal/gold accents, monospace type) wins the cascade rather than
+being replaced by Bootstrap's default look.
 
 ## Architecture
 
