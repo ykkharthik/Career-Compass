@@ -6,3 +6,5 @@ data/mail.properties
 # run, same reason a real app never commits its live database to git.
 *.mv.db
 *.trace.db
+# Presentation prep, not part of the codebase itself
+presentation_script_*.md
