@@ -84,7 +84,7 @@ public class WebServer {
     // each depends only on fields declared above it.
     private final AppContext ctx = new AppContext(auth, sessions, notifications);
     private final AuthPages authPages = new AuthPages(auth, mail, sessions, ctx);
-    private final StudentPages studentPages = new StudentPages(students, careers, classifier, recommender,
+    private final StudentPages studentPages = new StudentPages(students, careers, recommender,
             skillGap, certs, internships, percentiles, applications, endorsements, mentors, mentorships,
             notifications, trends, ctx);
     private final RecruiterPages recruiterPages = new RecruiterPages(students, endorsements, recommender,

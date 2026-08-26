@@ -3,7 +3,6 @@ package web;
 import auth.User;
 import com.sun.net.httpserver.HttpExchange;
 import exception.InvalidProfileException;
-import ml.KnnCareerClassifier;
 import model.Application;
 import model.CareerPath;
 import model.Certification;
@@ -51,7 +50,6 @@ public final class StudentPages {
 
     private final StudentRepository students;
     private final List<CareerPath> careers;
-    private final KnnCareerClassifier classifier;
     private final RecommendationService recommender;
     private final SkillGapService skillGap;
     private final CertificationAdvisor certs;
@@ -65,14 +63,13 @@ public final class StudentPages {
     private final TrendsService trends;
     private final AppContext ctx;
 
-    public StudentPages(StudentRepository students, List<CareerPath> careers, KnnCareerClassifier classifier,
+    public StudentPages(StudentRepository students, List<CareerPath> careers,
             RecommendationService recommender, SkillGapService skillGap, CertificationAdvisor certs,
             InternshipAdvisor internships, PercentileService percentiles, ApplicationRepository applications,
             EndorsementRepository endorsements, MentorRepository mentors, MentorshipRepository mentorships,
             NotificationRepository notifications, TrendsService trends, AppContext ctx) {
         this.students = students;
         this.careers = careers;
-        this.classifier = classifier;
         this.recommender = recommender;
         this.skillGap = skillGap;
         this.certs = certs;
@@ -189,11 +186,7 @@ public final class StudentPages {
 
         var recs = recommender.recommend(self, endorsed);
         StringBuilder b = new StringBuilder();
-        b.append("<h1>Career recommendations</h1><p class=\"sub\">Hybrid ranking: ")
-                .append("50% transparent rules (skill overlap + interest fit, with faculty-verified skills ")
-                .append("weighted higher), 25% k-NN and 25% Naive Bayes — two different learning paradigms over ")
-                .append("the same ").append(classifier.trainingSize())
-                .append(" example profiles.</p>");
+        b.append("<h1>Career recommendations</h1>");
         int rank = 0;
         List<Student> allStudents = students.findAll();
         for (var r : recs) {
