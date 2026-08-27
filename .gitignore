@@ -2,6 +2,9 @@ out/
 *.class
 server.log
 data/mail.properties
+# IDE project files (IntelliJ) - machine-specific, never shared
+.idea/
+*.iml
 # H2 database files (NotificationRepository) - regenerated fresh on first
 # run, same reason a real app never commits its live database to git.
 *.mv.db
