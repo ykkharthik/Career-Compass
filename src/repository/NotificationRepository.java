@@ -42,7 +42,10 @@ public class NotificationRepository implements Dao<Notification> {
             Class.forName("org.h2.Driver");
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(
-                    "H2 JDBC driver not on the classpath — see README's run instructions (lib/h2-*.jar)", e);
+                    "H2 JDBC driver not on the classpath. Add lib/h2-*.jar to the classpath: "
+                    + "javac -cp \"lib/h2-2.2.224.jar\" ... and java -cp \"out;lib/h2-2.2.224.jar\" ... "
+                    + "on the command line, or in IntelliJ, right-click lib/h2-2.2.224.jar in the "
+                    + "Project panel and choose \"Add as Library...\".", e);
         }
         createTableIfMissing();
     }
