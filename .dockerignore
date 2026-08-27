@@ -1,0 +1,9 @@
+.git
+.idea
+*.iml
+out
+server.log
+*.mv.db
+*.trace.db
+presentation_script_*.md
+data/mail.properties
